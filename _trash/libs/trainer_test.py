@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('--encoder-bidirectional', type=strtobool, default='0')
     parser.add_argument('--decoder-bidirectional', type=strtobool, default='0')
     args = parser.parse_args()
+    print(args)
 
     trainer = Trainer(args)
     for _ in range(50):
