@@ -1,5 +1,6 @@
 import random
 import unicodedata
+from collections import Counter
 import re
 import torch
 from torch.autograd import Variable
@@ -27,6 +28,8 @@ def get_batch(batch_size, train_data):
 
 
 def pad_to_batch(batch, xw2i, yw2i):
+    src, tgt = batch['src'], batch['tgt']
+    batch = list(zip(src, tgt))
     sorted_batch = sorted(batch,
                           key=lambda b: b[0].size(1),
                           reverse=True)
@@ -67,6 +70,16 @@ def prepare_sequence(seq, w2i):
     return Variable(LT(idxs))
 
 
+def prepare_batch(batch, sw2i, tw2i):
+    new_batch = {'src': [], 'tgt': []}
+    for s, t in zip(batch['src'], batch['tgt']):
+        s_p = prepare_sequence(s.split(), sw2i).view(1, -1)
+        t_p = prepare_sequence(t.split(), tw2i).view(1, -1)
+        new_batch['src'].append(s_p)
+        new_batch['tgt'].append(t_p)
+    return new_batch
+
+
 def unicode_to_ascii(s):
     return ''.join(
             c for c in unicodedata.normalize('NFD', s)
@@ -87,9 +100,11 @@ def get_dataset(src_path, tgt_path):
     tgt_sents = open(tgt_path, 'r', encoding='utf-8').readlines()
 
     X_r = [normalize_string(s).split() for s in src_sents]
-    Y_r = [s.split() for s in tgt_sents]
-    src_vocab = list(set(flatten(X_r)))
-    tgt_vocab = list(set(flatten(Y_r)))
+    Y_r = [normalize_string(s).split() for s in tgt_sents]
+    src_vocab = Counter(list(set(flatten(X_r))))
+    src_vocab = [cnt[0] for cnt in src_vocab.most_common(30000)]
+    tgt_vocab = Counter(list(set(flatten(Y_r))))
+    tgt_vocab = [cnt[0] for cnt in tgt_vocab.most_common(30000)]
 
     sw2i = {'<PAD>': 0, '<UNK>': 1, '<s>': 2, '</s>': 3}
     for vo in src_vocab:

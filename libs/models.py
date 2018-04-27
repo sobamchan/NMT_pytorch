@@ -121,7 +121,11 @@ class Decoder(nn.Module):
         decode = []
         for i in range(max_length):
             _, hidden = self.gru(torch.cat((embedded, context), 2), hidden)
-            concated = torch.cat((hidden, context.transpose(0, 1)), 2)
+            if self.n_layers > 1:
+                new_hidden = hidden[-1].unsqueeze(0)
+            else:
+                new_hidden = hidden
+            concated = torch.cat((new_hidden, context.transpose(0, 1)), 2)
             score = self.linear(concated.squeeze(0))
             softmaxed = F.log_softmax(score, 1)
             decode.append(softmaxed)
@@ -129,7 +133,7 @@ class Decoder(nn.Module):
             embedded = self.embedding(decoded).unsqueeze(1)
             if is_training:
                 embedded = self.dropout(embedded)
-            context, alpha = self.Attention(hidden,
+            context, alpha = self.Attention(new_hidden,
                                             encoder_outputs,
                                             encoder_masking)
 
