@@ -99,8 +99,8 @@ def get_dataset(src_path, tgt_path):
     src_sents = open(src_path, 'r', encoding='utf-8').readlines()
     tgt_sents = open(tgt_path, 'r', encoding='utf-8').readlines()
 
-    X_r = [normalize_string(s).split() for s in src_sents]
-    Y_r = [normalize_string(s).split() for s in tgt_sents]
+    X_r = [s.split() for s in src_sents]
+    Y_r = [s.split() for s in tgt_sents]
     src_vocab = Counter(list(set(flatten(X_r))))
     src_vocab = [cnt[0] for cnt in src_vocab.most_common(30000)]
     tgt_vocab = Counter(list(set(flatten(Y_r))))
