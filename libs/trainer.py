@@ -43,17 +43,31 @@ class Trainer:
                                  decoder_hidden_size,
                                  n_layers=args.decoder_num_layers,
                                  use_cuda=args.use_cuda)
+        src_embedder = models.Embedder(len(self.sw2i),
+                                       args.src_embedding_size,
+                                       args.use_cuda)
+        tgt_embedder = models.Embedder(len(self.tw2i),
+                                       args.tgt_embedding_size,
+                                       args.use_cuda)
         encoder.init_weight()
         decoder.init_weight()
         if args.use_cuda:
             encoder = encoder.cuda()
             decoder = decoder.cuda()
+            src_embedder = src_embedder.cuda()
+            tgt_embedder = tgt_embedder.cuda()
         self.encoder = encoder
         self.decoder = decoder
+        self.src_embedder = src_embedder
+        self.tgt_embedder = tgt_embedder
 
         self.loss_func = nn.CrossEntropyLoss(ignore_index=0)
         self.enc_optim = optim.Adam(encoder.parameters(), lr=args.lr)
         self.dec_optim = optim.Adam(decoder.parameters(), lr=args.lr)
+        self.src_embedder_optim = optim.Adam(self.src_embedder.parameters(),
+                                             lr=args.lr)
+        self.tgt_embedder_optim = optim.Adam(self.tgt_embedder.parameters(),
+                                             lr=args.lr)
 
     def train_one_epoch(self, d):
         sw2i = self.sw2i
@@ -68,15 +82,20 @@ class Trainer:
                 Variable(LT([[tw2i['<s>']] * targets.size(0)])).transpose(0, 1)
             self.encoder.zero_grad()
             self.decoder.zero_grad()
+            self.src_embedder.zero_grad()
+            self.tgt_embedder.zero_grad()
 
             if self.args.use_cuda:
                 inputs = inputs.cuda()
                 targets = targets.cuda()
                 start_decode = start_decode.cuda()
 
-            output, hidden_c = self.encoder(inputs, input_lengths)
+            output, hidden_c = self.encoder(self.src_embedder,
+                                            inputs,
+                                            input_lengths)
 
-            preds = self.decoder(start_decode,
+            preds = self.decoder(self.tgt_embedder,
+                                 start_decode,
                                  hidden_c,
                                  targets.size(1),
                                  output,
@@ -89,6 +108,8 @@ class Trainer:
             nn.utils.clip_grad_norm(self.decoder.parameters(), 50.0)
             self.enc_optim.step()
             self.dec_optim.step()
+            self.src_embedder_optim.step()
+            self.tgt_embedder_optim.step()
         print(np.mean(losses))
         preds = preds.view(inputs.size(0), targets.size(1), -1)
         preds_max = torch.max(preds, 2)[1]

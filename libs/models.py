@@ -7,6 +7,20 @@ from torch.nn.utils.rnn import pad_packed_sequence
 import torch.nn.functional as F
 
 
+class Embedder(nn.Module):
+
+    def __init__(self, input_size, embedding_size, use_cuda=True):
+        super(Embedder, self).__init__()
+        self.input_size = input_size
+        self.embedding_size = embedding_size
+        self.use_cuda = use_cuda
+        self.embedding = nn.Embedding(input_size, embedding_size)
+        self.embedding.weight = nn.init.xavier_uniform(self.embedding.weight)
+
+    def forward(self, x):
+        return self.embedding(x)
+
+
 class Encoder(nn.Module):
 
     def __init__(self, input_size, embedding_size,
@@ -17,8 +31,6 @@ class Encoder(nn.Module):
         self.hidden_size = hidden_size
         self.n_layers = n_layers
         self.use_cuda = use_cuda
-
-        self.embedding = nn.Embedding(input_size, embedding_size)
 
         if bidirec:
             self.n_direction = 2
@@ -41,13 +53,12 @@ class Encoder(nn.Module):
         return hidden.cuda() if self.use_cuda else hidden
 
     def init_weight(self):
-        self.embedding.weight = nn.init.xavier_uniform(self.embedding.weight)
         self.gru.weight_hh_l0 = nn.init.xavier_uniform(self.gru.weight_hh_l0)
         self.gru.weight_ih_l0 = nn.init.xavier_uniform(self.gru.weight_ih_l0)
 
-    def forward(self, inputs, input_lengths):
+    def forward(self, embedder, inputs, input_lengths):
         hidden = self.init_hidden(inputs)
-        embedded = self.embedding(inputs)
+        embedded = embedder(inputs)
         packed = pack_padded_sequence(embedded,
                                       input_lengths,
                                       batch_first=True)
@@ -73,7 +84,6 @@ class Decoder(nn.Module):
         self.n_layers = n_layers
         self.use_cuda = use_cuda
 
-        self.embedding = nn.Embedding(input_size, embedding_size)
         self.dropout = nn.Dropout(dropout_p)
 
         self.gru = nn.GRU(embedding_size + hidden_size,
@@ -90,7 +100,6 @@ class Decoder(nn.Module):
         return hidden.cuda() if self.use_cuda else hidden
 
     def init_weight(self):
-        self.embedding.weight = nn.init.xavier_uniform(self.embedding.weight)
         self.gru.weight_hh_l0 = nn.init.xavier_uniform(self.gru.weight_hh_l0)
         self.gru.weight_ih_l0 = nn.init.xavier_uniform(self.gru.weight_ih_l0)
         self.linear.weight = nn.init.xavier_uniform(self.linear.weight)
@@ -111,9 +120,9 @@ class Decoder(nn.Module):
 
         return context, alpha
 
-    def forward(self, inputs, context, max_length, encoder_outputs,
+    def forward(self, embedder, inputs, context, max_length, encoder_outputs,
                 encoder_masking=False, is_training=False):
-        embedded = self.embedding(inputs)
+        embedded = embedder(inputs)
         hidden = self.init_hidden(inputs)
         if is_training:
             embedded = self.dropout(embedded)
@@ -130,7 +139,7 @@ class Decoder(nn.Module):
             softmaxed = F.log_softmax(score, 1)
             decode.append(softmaxed)
             decoded = softmaxed.max(1)[1]
-            embedded = self.embedding(decoded).unsqueeze(1)
+            embedded = embedder(decoded).unsqueeze(1)
             if is_training:
                 embedded = self.dropout(embedded)
             context, alpha = self.Attention(new_hidden,
@@ -140,9 +149,9 @@ class Decoder(nn.Module):
         scores = torch.cat(decode, 1)
         return scores.view(inputs.size(0) * max_length, -1)
 
-    def decode(self, context, encoder_outputs, w2i):
+    def decode(self, embedder, context, encoder_outputs, w2i):
         start_decode = Variable(LongTensor([[w2i['<s>']] * 1])).transpose(0, 1)
-        embedded = self.embedding(start_decode)
+        embedded = embedder(start_decode)
         hidden = self.init_hidden(start_decode)
 
         decodes = []
@@ -155,7 +164,7 @@ class Decoder(nn.Module):
             softmaxed = F.log_softmax(score, 1)
             decodes.append(softmaxed)
             decoded = softmaxed.max(1)[1]
-            embedded = self.embedding(decoded).unsqueeze(1)
+            embedded = embedder(decoded).unsqueeze(1)
             context, alpha = self.Attention(hidden, encoder_outputs, None)
             attentions.append(alpha.squeeze(1))
 
