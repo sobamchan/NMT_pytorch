@@ -10,6 +10,7 @@ class Evaluator:
 
     def __init__(self, trainer):
         self.trainer = trainer
+        self.args = trainer.args
         self.sw2i = trainer.sw2i
         self.si2w = trainer.si2w
         self.tw2i = trainer.tw2i
