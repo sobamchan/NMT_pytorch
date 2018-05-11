@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch import LongTensor as LT
@@ -111,7 +110,3 @@ class Trainer:
             self.src_embedder_optim.step()
             self.tgt_embedder_optim.step()
         print(np.mean(losses))
-        preds = preds.view(inputs.size(0), targets.size(1), -1)
-        preds_max = torch.max(preds, 2)[1]
-        print(' '.join([self.ti2w[p] for p in preds_max.data[0].tolist()]))
-        print(' '.join([self.ti2w[p] for p in preds_max.data[1].tolist()]))
