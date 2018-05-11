@@ -3,7 +3,7 @@ import argparse
 from distutils.util import strtobool
 import torch
 from libs.trainer import Trainer
-# from libs.evaluator import Evaluator
+from libs.evaluator import Evaluator
 
 
 def get_args():
@@ -42,7 +42,7 @@ def get_args():
 def main(args):
     print(args)
     trainer = Trainer(args)
-    # evaluator = Evaluator(trainer)
+    evaluator = Evaluator(trainer)
     for i_epoch in range(0, args.epoch + 1):
 
         # train
@@ -53,6 +53,7 @@ def main(args):
         # trainer.translation_validate()
 
         # evaluation and logging
+        evaluator.calc_test_loss()
         # evaluator.bleu(log_dict)
         # evaluator.sample_translation()
 
