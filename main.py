@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 import argparse
 from distutils.util import strtobool
 import torch
@@ -46,16 +47,18 @@ def main(args):
     for i_epoch in range(0, args.epoch + 1):
 
         # train
-        log_dict = {'i_epoch': i_epoch,
-                    'train_losses': [],  # per batch
-                    'test_bleus': []}   # per sample
+        log_dict = {}   # per sample
+        log_dict['epoch'] = i_epoch
+
         trainer.train_one_epoch(log_dict)
         # trainer.translation_validate()
 
         # evaluation and logging
-        evaluator.calc_test_loss()
+        evaluator.calc_test_loss(log_dict)
         # evaluator.bleu(log_dict)
         # evaluator.sample_translation()
+
+        pprint(log_dict)
 
 
 if __name__ == '__main__':

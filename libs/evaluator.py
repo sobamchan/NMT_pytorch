@@ -3,7 +3,6 @@ import torch
 from torch import LongTensor as LT
 from torch.autograd import Variable
 from libs import utils
-from tqdm import tqdm
 
 
 class Evaluator:
@@ -22,11 +21,11 @@ class Evaluator:
         self.loss_func = trainer.loss_func
         self.test_dataloader = trainer.test_dataloader
 
-    def calc_test_loss(self):
+    def calc_test_loss(self, log_dict):
         sw2i = self.sw2i
         tw2i = self.tw2i
         losses = []
-        for batch in tqdm(self.test_dataloader):
+        for batch in self.test_dataloader:
             batch = utils.prepare_batch(batch, sw2i, tw2i)
             inputs, targets, input_lengths, target_lengths =\
                 utils.pad_to_batch(batch, sw2i, tw2i)
@@ -54,8 +53,15 @@ class Evaluator:
                                  True)
             loss = self.loss_func(preds, targets.view(-1))
             losses.append(loss.data[0])
-        print(np.mean(losses))
+
+        log_dict['test_loss'] = np.mean(losses)
+
+        log_dict['sample_translation'] = {}
+        log_dict['sample_translation']['src'] =\
+            self.test_dataloader.dataset.src[0]
         preds = preds.view(inputs.size(0), targets.size(1), -1)
         preds_max = torch.max(preds, 2)[1]
-        print(' '.join([self.ti2w[p] for p in preds_max.data[0].tolist()]))
-        print(' '.join([self.ti2w[p] for p in preds_max.data[1].tolist()]))
+        log_dict['sample_translation']['src'] =\
+            ' '.join([self.ti2w[p] for p in preds_max.data[0].tolist()])
+
+        return log_dict

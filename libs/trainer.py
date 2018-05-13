@@ -68,7 +68,7 @@ class Trainer:
         self.tgt_embedder_optim = optim.Adam(self.tgt_embedder.parameters(),
                                              lr=args.lr)
 
-    def train_one_epoch(self, d):
+    def train_one_epoch(self, log_dict):
         sw2i = self.sw2i
         tw2i = self.tw2i
         losses = []
@@ -109,4 +109,4 @@ class Trainer:
             self.dec_optim.step()
             self.src_embedder_optim.step()
             self.tgt_embedder_optim.step()
-        print(np.mean(losses))
+        log_dict['train_loss'] = np.mean(losses)
