@@ -76,20 +76,19 @@ class Dataset(data.Dataset):
         return {'src': self.src[idx], 'tgt': self.tgt[idx]}
 
 
-def get_dataloaders(data_dir, src_lang, tgt_lang, batch_size,
+def get_dataloaders(train_src, train_tgt, valid_src, valid_tgt, batch_size,
                     src_vocab_size, tgt_vocab_size):
-    data_dir = Path(data_dir)
-    src_path = data_dir / ('train.%s' % src_lang)
-    tgt_path = data_dir / ('train.%s' % tgt_lang)
-    train_dataset = Dataset(str(src_path),
-                            str(tgt_path),
+    train_src = Path(train_src)
+    train_tgt = Path(train_tgt)
+    train_dataset = Dataset(str(train_src),
+                            str(train_tgt),
                             test=False,
                             src_vocab_size=src_vocab_size,
                             tgt_vocab_size=tgt_vocab_size)
-    src_path = data_dir / ('test.%s' % src_lang)
-    tgt_path = data_dir / ('test.%s' % tgt_lang)
-    test_dataset = Dataset(str(src_path),
-                           str(tgt_path),
+    valid_src = Path(valid_src)
+    valid_tgt = Path(valid_tgt)
+    test_dataset = Dataset(str(valid_src),
+                           str(valid_tgt),
                            test=True,
                            sw2i=train_dataset.sw2i,
                            tw2i=train_dataset.tw2i)

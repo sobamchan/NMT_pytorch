@@ -10,14 +10,14 @@ from libs.evaluator import Evaluator
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu-id', type=int, default=0)
-    parser.add_argument('--data-dir',
-                        type=str,
-                        default='../DATA/small-europarl-v7')
+
+    parser.add_argument('--train-src', type=str)
+    parser.add_argument('--train-tgt', type=str)
+    parser.add_argument('--valid-src', type=str)
+    parser.add_argument('--valid-tgt', type=str)
     parser.add_argument('--output-dir',
                         type=str,
                         default='./test')
-    parser.add_argument('--src-lang', type=str, default='fr')
-    parser.add_argument('--tgt-lang', type=str, default='en')
 
     parser.add_argument('--epoch', type=int, default=100)
     parser.add_argument('--batch-size', type=int, default=128)
