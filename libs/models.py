@@ -15,7 +15,7 @@ class Embedder(nn.Module):
         self.embedding_size = embedding_size
         self.use_cuda = use_cuda
         self.embedding = nn.Embedding(input_size, embedding_size)
-        self.embedding.weight = nn.init.xavier_uniform(self.embedding.weight)
+        self.embedding.weight = nn.init.xavier_uniform_(self.embedding.weight)
 
     def forward(self, x):
         return self.embedding(x)
@@ -53,8 +53,8 @@ class Encoder(nn.Module):
         return hidden.cuda() if self.use_cuda else hidden
 
     def init_weight(self):
-        self.gru.weight_hh_l0 = nn.init.xavier_uniform(self.gru.weight_hh_l0)
-        self.gru.weight_ih_l0 = nn.init.xavier_uniform(self.gru.weight_ih_l0)
+        self.gru.weight_hh_l0 = nn.init.xavier_uniform_(self.gru.weight_hh_l0)
+        self.gru.weight_ih_l0 = nn.init.xavier_uniform_(self.gru.weight_ih_l0)
 
     def forward(self, embedder, inputs, input_lengths):
         hidden = self.init_hidden(inputs)
@@ -100,10 +100,10 @@ class Decoder(nn.Module):
         return hidden.cuda() if self.use_cuda else hidden
 
     def init_weight(self):
-        self.gru.weight_hh_l0 = nn.init.xavier_uniform(self.gru.weight_hh_l0)
-        self.gru.weight_ih_l0 = nn.init.xavier_uniform(self.gru.weight_ih_l0)
-        self.linear.weight = nn.init.xavier_uniform(self.linear.weight)
-        self.attn.weight = nn.init.xavier_uniform(self.attn.weight)
+        self.gru.weight_hh_l0 = nn.init.xavier_uniform_(self.gru.weight_hh_l0)
+        self.gru.weight_ih_l0 = nn.init.xavier_uniform_(self.gru.weight_ih_l0)
+        self.linear.weight = nn.init.xavier_uniform_(self.linear.weight)
+        self.attn.weight = nn.init.xavier_uniform_(self.attn.weight)
 
     def Attention(self, hidden, encoder_outputs, encoder_masking):
         hidden = hidden[0].unsqueeze(2)
