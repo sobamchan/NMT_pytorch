@@ -44,6 +44,9 @@ def main(args):
     print(args)
     trainer = Trainer(args)
     evaluator = Evaluator(trainer)
+
+    best_val_loss = 1e+10
+
     for i_epoch in range(0, args.epoch + 1):
 
         # train
@@ -57,6 +60,10 @@ def main(args):
         evaluator.calc_test_loss(log_dict)
         # evaluator.bleu(log_dict)
         # evaluator.sample_translation()
+
+        if best_val_loss > log_dict['test_loss']:
+            best_val_loss = log_dict['test_loss']
+            trainer.dump_model(args.output_dir)
 
         pprint(log_dict)
 

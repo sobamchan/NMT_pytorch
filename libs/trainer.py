@@ -1,8 +1,12 @@
+from pathlib import Path
 import numpy as np
+
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch import LongTensor as LT
 from torch.autograd import Variable
+
 from libs import models
 from libs import utils
 from libs.dataset import get_dataloaders
@@ -111,3 +115,32 @@ class Trainer:
             self.src_embedder_optim.step()
             self.tgt_embedder_optim.step()
         log_dict['train_loss'] = np.mean(losses)
+
+    def dump_model(self, output_dir, fname=None):
+        if fname:
+            opath = Path(output_dir) / fname
+        else:
+            opath = Path(output_dir) / 'checkpoint.pth'
+
+        cp = {
+                'encoder_state_dict': self.encoder.to('cpu').state_dict(),
+                'decoder_state_dict': self.decoder.to('cpu').state_dict(),
+                'src_embedder': self.src_embedder.to('cpu').state_dict(),
+                'tgt_embedder': self.tgt_embedder.to('cpu').state_dict(),
+                'sw2i': self.sw2i,
+                'si2w': self.si2w,
+                'tw2i': self.ti2w,
+                'ti2w': self.ti2w,
+                'args': self.args,
+                }
+
+        print('dumping model to %s' % opath)
+
+        with open(opath, 'wb') as f:
+            torch.save(cp, f)
+
+        if self.args.use_cuda:
+            self.encoder.to('cuda')
+            self.decoder.to('cuda')
+            self.src_embedder.to('cuda')
+            self.tgt_embedder.to('cuda')
