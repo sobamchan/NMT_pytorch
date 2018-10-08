@@ -58,9 +58,11 @@ class Evaluator:
 
         log_dict['sample_translation'] = {}
         log_dict['sample_translation']['src'] =\
-            self.test_dataloader.dataset.src[0]
+            ' '.join([self.si2w[p] for p in inputs.data[0].tolist()])
+
         log_dict['sample_translation']['tgt'] =\
-            self.test_dataloader.dataset.tgt[0]
+            ' '.join([self.ti2w[p] for p in targets.data[0].tolist()])
+
         preds = preds.view(inputs.size(0), targets.size(1), -1)
         preds_max = torch.max(preds, 2)[1]
         log_dict['sample_translation']['prediction'] =\
