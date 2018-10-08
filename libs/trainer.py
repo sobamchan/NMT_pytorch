@@ -14,9 +14,10 @@ class Trainer:
     def __init__(self, args):
         self.args = args
         train_dataloader, test_dataloader =\
-            get_dataloaders(args.data_dir,
-                            args.src_lang,
-                            args.tgt_lang,
+            get_dataloaders(args.train_src,
+                            args.train_tgt,
+                            args.valid_src,
+                            args.valid_tgt,
                             args.batch_size,
                             args.src_vocab_size,
                             args.tgt_vocab_size)
