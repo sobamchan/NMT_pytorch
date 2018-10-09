@@ -1,7 +1,6 @@
 import os
 from pprint import pprint
 import argparse
-from distutils.util import strtobool
 import torch
 from libs.trainer import Trainer
 from libs.evaluator import Evaluator
@@ -33,9 +32,9 @@ def get_args():
     parser.add_argument('--decoder-hidden-n', type=int, default=512)
     parser.add_argument('--decoder-num-layers', type=int, default=1)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--use-cuda', type=strtobool, default='1')
-    parser.add_argument('--encoder-bidirectional', type=strtobool, default='0')
-    parser.add_argument('--decoder-bidirectional', type=strtobool, default='0')
+    parser.add_argument('--use-cuda', action='store_true')
+    parser.add_argument('--encoder-bidirectional', action='store_true')
+    parser.add_argument('--decoder-bidirectional', action='store_true')
     parser.add_argument('--seed', type=int, default=0)
     return parser.parse_args()
 
