@@ -24,6 +24,7 @@ def main(args):
     cargs = cp['args']
     sw2i = cp['sw2i']
     tw2i = cp['tw2i']
+    ti2w = cp['ti2w']
 
     device = torch.device('cuda' if args.use_cuda else 'cpu')
 
@@ -80,14 +81,13 @@ def main(args):
     translated = []
     for x in X:
         idxs = list(map(lambda w: sw2i.get(w, sw2i['<UNK>']), x))
-        print(x)
         idxs = torch.tensor([idxs], device=device)
         length = idxs.size(1)
         output, hidden_c = encoder(src_embedder, idxs, [length])
         start_decode =\
-            torch.tensor([[tw2i['<s>']] * 1])
+            torch.tensor([[tw2i['<s>']] * 1]).to(device)
 
-        # preds: 1, 50, V
+        # preds: 50, V
         preds = decoder(
                 tgt_embedder,
                 start_decode,
@@ -98,9 +98,9 @@ def main(args):
                 False
                 )
 
-        # preds_max: 1, 50
-        preds_max = torch.max(preds, 2)[1]
-        sent = ' '.join([tw2i[p] for p in preds_max.data[0].tolist()])
+        # preds_max: 50, V
+        preds_max = torch.max(preds, 1)[1]
+        sent = ' '.join([ti2w[p] for p in preds_max.data.tolist()])
         translated.append(sent)
 
     return translated
