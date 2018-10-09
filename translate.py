@@ -25,6 +25,8 @@ def main(args):
     sw2i = cp['sw2i']
     tw2i = cp['tw2i']
 
+    device = torch.device('cuda' if args.use_cuda else 'cpu')
+
     encoder = models.Encoder(
             len(sw2i),
             cargs.src_embedding_size,
@@ -62,12 +64,46 @@ def main(args):
     src_embedder.load_state_dict(cp['src_embedder'])
     tgt_embedder.load_state_dict(cp['tgt_embedder'])
 
+    encoder.to(device)
+    decoder.to(device)
+    src_embedder.to(device)
+    tgt_embedder.to(device)
+
     # data
     lines = open(args.src, 'r', encoding='utf-8').readlines()
+    lines = [l.strip() + ' </s>' for l in lines]
     if args.src.find('ja') == -1:
-        x = [utils.normalize_string(line).split() for line in lines]
+        X = [utils.normalize_string(line).split() for line in lines]
     else:
-        x = [line.lower.split() for line in lines]
+        X = [line.lower().split() for line in lines]
+
+    translated = []
+    for x in X:
+        idxs = list(map(lambda w: sw2i.get(w, sw2i['<UNK>']), x))
+        print(x)
+        idxs = torch.tensor([idxs], device=device)
+        length = idxs.size(1)
+        output, hidden_c = encoder(src_embedder, idxs, [length])
+        start_decode =\
+            torch.tensor([[tw2i['<s>']] * 1])
+
+        # preds: 1, 50, V
+        preds = decoder(
+                tgt_embedder,
+                start_decode,
+                hidden_c,
+                50,
+                output,
+                None,
+                False
+                )
+
+        # preds_max: 1, 50
+        preds_max = torch.max(preds, 2)[1]
+        sent = ' '.join([tw2i[p] for p in preds_max.data[0].tolist()])
+        translated.append(sent)
+
+    return translated
 
 
 if __name__ == '__main__':
@@ -82,4 +118,5 @@ if __name__ == '__main__':
     else:
         args.use_cuda = False
 
-    main(args)
+    lines = main(args)
+    print(lines)
