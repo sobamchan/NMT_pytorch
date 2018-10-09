@@ -129,7 +129,7 @@ class Trainer:
                 'tgt_embedder': self.tgt_embedder.to('cpu').state_dict(),
                 'sw2i': self.sw2i,
                 'si2w': self.si2w,
-                'tw2i': self.ti2w,
+                'tw2i': self.tw2i,
                 'ti2w': self.ti2w,
                 'args': self.args,
                 }
